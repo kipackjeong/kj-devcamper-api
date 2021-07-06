@@ -2,7 +2,11 @@ const mongoose = require('mongoose')
 const slugify = require('slugify')
 const colors = require('colors')
 const { getGeoCode } = require('../utility/geocoder')
-
+// email validation
+const validateEmail = (email) => {
+  const re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
+  return re.test(email)
+}
 const BootcampSchema = new mongoose.Schema(
   {
     name: {
@@ -31,9 +35,10 @@ const BootcampSchema = new mongoose.Schema(
     },
     email: {
       type: String,
+      validation: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
       match: [
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        'Please add a valid email',
+        /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+        'Please provide valid email',
       ],
     },
     address: {
@@ -104,11 +109,16 @@ const BootcampSchema = new mongoose.Schema(
   },
   { toObject: { virtuals: true }, toJSON: { virtuals: true } },
 )
+BootcampSchema.path('email').validate(function (email) {
+  const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+  return emailRegex.test(email)
+}, 'Please provide valid email')
 
 // Create bootcamp slug from the name
 BootcampSchema.pre('save', async function (next) {
   this.slug = slugify(this.name, { lower: true })
   const loc = await getGeoCode(this.address)
+
   this.location = {
     type: 'Point',
     coordinates: [loc[0].longitude, loc[0].latitude],
@@ -125,8 +135,12 @@ BootcampSchema.pre('remove', async function (next) {
   await this.model('Course').deleteMany({ bootcamp: this._id })
   next()
 })
-BootcampSchema.post('save', async function () {
-  console.log(`${this.name}, Bootcamp created in DB.`.yellow)
+BootcampSchema.post('save', function (error, doc, next) {
+  if (error) {
+    console.error(error)
+  } else {
+    console.log(`${this.name}, Bootcamp created in DB.`.yellow)
+  }
 })
 
 //Reverse populate with virtuals

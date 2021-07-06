@@ -27,7 +27,6 @@ const bootcamps = JSON.parse(
 const courses = JSON.parse(
   fs.readFileSync(`${__dirname}/_data/courses.json`, 'utf-8'),
 )
-
 // Import into DB
 const importData = async () => {
   try {

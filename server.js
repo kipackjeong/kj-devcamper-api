@@ -1,9 +1,11 @@
+const path = require('path')
 const express = require('express') // express
 const dotenv = require('dotenv') // environment variable
 const morgan = require('morgan') // third party logger
 const connectDB = require('./config/db') // database
 const colors = require('colors') // colors
 const errorHandler = require('./middleware/errorHandler') // custom error handler
+const fileUpload = require('express-fileupload')
 
 // Load env vars
 dotenv.config({ path: './config/config.env' })
@@ -27,6 +29,11 @@ app.use(express.json())
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'))
 }
+// file upload middleware : https://www.npmjs.com/package/express-fileupload
+app.use(fileUpload())
+
+// Set static
+app.use(express.static(path.join(__dirname, 'public')))
 
 // Mount Routers
 app.use('/api/v1/bootcamps', bootcampsRouter)

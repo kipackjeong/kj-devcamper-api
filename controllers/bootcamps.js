@@ -4,7 +4,6 @@ const Bootcamp = require('../models/Bootcamp')
 const errorHandler = require('../middleware/errorHandler')
 const asyncHandler = require('../middleware/asyncHandler')
 const { getLatAndLng } = require('../utility/geocoder')
-
 // @desc : Get all bootcamps
 // @route : GET /api/v1/bootcamps
 // @access : Public
@@ -12,7 +11,7 @@ exports.getBootcamps = asyncHandler(async (req, res, next) => {
   res.status(200).json(res.advancedResults)
 })
 
-// @desc : Get single bootcampsx`
+// @desc : Get single bootcamps
 // @route : GET /api/v1/bootcamps/:id
 // @access : Public
 exports.getBootcamp = asyncHandler(async (req, res, next) => {

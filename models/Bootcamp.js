@@ -2,11 +2,6 @@ const mongoose = require('mongoose')
 const slugify = require('slugify')
 const colors = require('colors')
 const { getGeoCode } = require('../utility/geocoder')
-// email validation
-const validateEmail = (email) => {
-  const re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/
-  return re.test(email)
-}
 const BootcampSchema = new mongoose.Schema(
   {
     name: {
@@ -113,12 +108,10 @@ BootcampSchema.path('email').validate(function (email) {
   const emailRegex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
   return emailRegex.test(email)
 }, 'Please provide valid email')
-
 // Create bootcamp slug from the name
 BootcampSchema.pre('save', async function (next) {
   this.slug = slugify(this.name, { lower: true })
   const loc = await getGeoCode(this.address)
-
   this.location = {
     type: 'Point',
     coordinates: [loc[0].longitude, loc[0].latitude],
@@ -150,5 +143,4 @@ BootcampSchema.virtual('courses', {
   foreignField: 'bootcamp',
   justOne: false,
 })
-
 module.exports = mongoose.model('Bootcamp', BootcampSchema)

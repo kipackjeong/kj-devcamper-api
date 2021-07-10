@@ -29,6 +29,7 @@ exports.getBootcamp = asyncHandler(async (req, res, next) => {
 // @access : Private
 exports.createBootcamp = asyncHandler(async (req, res, next) => {
   // This will create a bootcamp model with data from request, into mongo db.
+  console.log(req.body)
   const bootcamp = await Bootcamp.create(req.body)
 
   res.status(201).json({ success: true, data: bootcamp })

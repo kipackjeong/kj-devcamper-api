@@ -18,6 +18,7 @@ const advancedResults = (model, populate) => async (req, res, next) => {
   // Select Fields ex) &select=description,name
   if (req.query.select) {
     let selectedFields = req.query.select.split(',').join(' ')
+
     query.select(selectedFields)
   }
 

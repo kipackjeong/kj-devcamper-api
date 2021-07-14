@@ -1,8 +1,7 @@
 const path = require('path')
 const ErrorResponse = require('../utility/errorResponse')
 const Bootcamp = require('../models/Bootcamp')
-const errorHandler = require('../middleware/errorHandler')
-const asyncHandler = require('../middleware/asyncHandler')
+const asyncHandler = require('../middleware/async')
 const { getLatAndLng } = require('../utility/geocoder')
 // @desc : Get all bootcamps
 // @route : GET /api/v1/bootcamps
@@ -28,8 +27,20 @@ exports.getBootcamp = asyncHandler(async (req, res, next) => {
 // @route : POST /api/v1/bootcamps
 // @access : Private
 exports.createBootcamp = asyncHandler(async (req, res, next) => {
+  // Add user
+  req.body.user = req.user.id
+
+  // Check for published bootcamp
+  const publishedBootcamp = await Bootcamp.find({ user: req.user.id })
+  if (publishedBootcamp && req.user.role != 'admin') {
+    return next(
+      new ErrorResponse(
+        `The current user ${req.user.name} is not an admin and already published one bootcamp`,
+      ),
+      400,
+    )
+  }
   // This will create a bootcamp model with data from request, into mongo db.
-  console.log(req.body)
   const bootcamp = await Bootcamp.create(req.body)
 
   res.status(201).json({ success: true, data: bootcamp })
@@ -39,15 +50,25 @@ exports.createBootcamp = asyncHandler(async (req, res, next) => {
 // @route : PUT /api/v1/bootcamps/:id
 // @access : Private
 exports.updateBootcamp = asyncHandler(async (req, res, next) => {
-  const bootcamp = await Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  })
+  let bootcamp = await Bootcamp.findById(req.params.id)
   if (!bootcamp) {
     return next(
       new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, 404),
     )
   }
+  // check for user if they are the owner
+  if (bootcamp.user.toString() != req.user.id && req.user.role != 'admin') {
+    return next(
+      new ErrorResponse(
+        `Current user ${req.user.name}, is not allowed to modify this bootcamp.`,
+        401,
+      ),
+    )
+  }
+  bootcamp = await Bootcamp.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true,
+  })
   res.status(200).json({ success: true, data: bootcamp })
 })
 
@@ -59,6 +80,15 @@ exports.deleteBootcamp = asyncHandler(async (req, res, next) => {
   if (!bootcamp) {
     return next(
       new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`, 404),
+    )
+  }
+  // check for user if they are the owner
+  if (bootcamp.user.toString() != req.user.id && req.user.role != 'admin') {
+    return next(
+      new ErrorResponse(
+        `Current user ${req.user.name}, is not allowed to modify this bootcamp.`,
+        401,
+      ),
     )
   }
   bootcamp.remove()
@@ -112,6 +142,15 @@ exports.bootcampPhotoUpload = asyncHandler(async (req, res, next) => {
       new ErrorResponse(
         `Please upload an image less than ${process.env.MAX_FILE_UPLOAD}`,
         400,
+      ),
+    )
+  }
+  // check for user if they are the owner
+  if (bootcamp.user.toString() != req.user.id && req.user.role != 'admin') {
+    return next(
+      new ErrorResponse(
+        `Current user ${req.user.name}, is not allowed to modify this bootcamp.`,
+        401,
       ),
     )
   }

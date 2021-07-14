@@ -13,7 +13,7 @@
 
 # **User Authentication**  
 
-npm package need: jsonwebtoken , bcryptjs
+## npm package: jsonwebtoken , bcryptjs
 
 ## Encrypt password using bcryptjs
 
@@ -71,4 +71,122 @@ exports.login = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({ success: true, data: user })
 })
+```  
+note: because password field is set to select:false, .select('+password') is needed when retrieving user via email.
+
+# **Storing token in cookie**
+## npm package: cookie-parser
+
+## Add cookieparser middleware to server.js
+```js
+const cookieParser = require('cookie-parser')
+app.use(cookieParser)
 ```
+### now that cookieParser is added as middleware.
+We can use res.cookie
+### but before that, lets wrap the regular response in controller with tokenresponse
+```js
+// Get token from model, create cookie and send response
+const sendTokenResponse = (user, statusCode, res) => {
+  // Create token
+  const token = user.getSignedJwtToken()
+
+  const options = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000,
+    ),
+    httpOnly: true,
+  }
+
+  res
+    .status(statusCode)
+    .cookie('token', token, options)
+    .json({ success: true, token: token })
+}
+```
+
+### call this above method in controller
+```js
+  sendTokenResponse(user, 200, res)
+```
+
+### if you want to secure cookie i.e. in production
+```js
+  const options = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRE * 24 * 60 * 60 * 1000,
+    ),
+    httpOnly: true,
+  }
+
+  if (process.env.NODE_ENV == 'production') {
+    options.secure = true
+  }
+  res
+  .status(statusCode)
+  .cookie('token', token, options)
+  .json({ success: true, token: token })
+```
+
+# **Auth middleware**
+
+## protect method to do initial authorization.
+```js
+exports.protect = asyncHandler(async (req, res, next) => {
+  let token
+
+  if (  // check request header 
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    token = req.headers.authorization.split(' ')[1]
+  } else if (req.cookies.token) {   // check cookie
+    token = req.cookies.token
+  }
+
+  if (!token) {
+    return next(new ErrorResponse('Not authorized to access this route', 401))
+  }
+  // wrap it with try catch block
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    req.user = await User.findById(decoded.id)
+    next()
+  } catch (error) {
+    return next(new ErrorResponse('Not authorized to access this route', 401))
+  }
+})
+```
+
+## Authorize method to authorize user by their roles
+```js
+exports.authorize = (...roles) => async (req, res, next) => {
+  if (!roles.includes(req.user.role)) {
+    return next(
+      new ErrorResponse(
+        `User role ${req.user.role} is not authorized to access this route`,
+        403,
+      ),
+    )
+  }
+  next()
+}
+
+```
+
+## attach above auth middleware's methods (protect and authorize) to the needed route.
+```js
+router
+  .route('/')
+  .get(advancedResults(Bootcamp, { path: 'courses' }), getBootcamps)
+  .post(protect, authorize('admin', 'publisher'), createBootcamp)
+router
+  .route('/:id')
+  .get(getBootcamp)
+  .put(protect, updateBootcamp)
+  .delete(protect, deleteBootcamp)
+
+```
+
+## now that I have attached my auth middleware which verifies and sets req.user from request headers, we may access req.user in any controllers.
+

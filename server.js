@@ -4,8 +4,9 @@ const dotenv = require('dotenv') // environment variable
 const morgan = require('morgan') // third party logger
 const connectDB = require('./config/db') // database
 const colors = require('colors') // colors
-const errorHandler = require('./middleware/errorHandler') // custom error handler
+const errorHandler = require('./middleware/error') // custom error handler
 const fileUpload = require('express-fileupload')
+const cookieParser = require('cookie-parser')
 
 // Load env vars
 dotenv.config({ path: './config/config.env' })
@@ -13,10 +14,6 @@ dotenv.config({ path: './config/config.env' })
 // Connect to DB
 connectDB()
 
-// Route files
-const bootcampsRouter = require('./routes/bootcamps')
-const coursesRouter = require('./routes/courses')
-const authRouter = require('./routes/auth')
 // // Custom Logger
 // const logger = require('./middleware/logger')
 
@@ -35,10 +32,20 @@ app.use(fileUpload())
 // Set static
 app.use(express.static(path.join(__dirname, 'public')))
 
+// Cookie Parser
+app.use(cookieParser())
+
+// Route files
+const bootcampsRouter = require('./routes/bootcamps')
+const coursesRouter = require('./routes/courses')
+const authRouter = require('./routes/auth')
+const usersRouter = require('./routes/users')
 // Mount Routers
 app.use('/api/v1/bootcamps', bootcampsRouter)
 app.use('/api/v1/courses', coursesRouter)
 app.use('/api/v1/auth', authRouter)
+app.use('/api/v1/users', usersRouter)
+
 app.use(errorHandler)
 
 const PORT = process.env.PORT || 5000

@@ -73,7 +73,7 @@ exports.getMe = asyncHandler(async (req, res, next) => {
 })
 
 // @desc : Forgot password functionality
-// @route : POST /api/v1/auth/forgotpw
+// @route : POST /api/v1/auth/forgotpassword
 // @access : Private
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
   // find user by email from req.body
@@ -82,4 +82,10 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   if (!user) {
     return next(new ErrorResponse(`There is no user with that email`, 404))
   }
+  // get reset token
+  const resetToken = await user.getResetPasswordToken()
+
+  await user.save({ validateBeforeSave: false })
+
+  res.status(200).json({ success: true, data: user })
 })

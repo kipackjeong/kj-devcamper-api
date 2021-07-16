@@ -84,8 +84,8 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
   }
   // get reset token
   const resetToken = await user.getResetPasswordToken()
-
   await user.save({ validateBeforeSave: false })
+  await user.sendForgotPasswordEmail('forgot password')
 
   res.status(200).json({ success: true, data: user })
 })

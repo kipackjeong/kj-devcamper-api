@@ -190,3 +190,43 @@ router
 
 ## now that I have attached my auth middleware which verifies and sets req.user from request headers, we may access req.user in any controllers.
 
+
+# **Forgot Password**
+## npm package: nodemailer
+```js
+// Generate and hash password token
+UserSchema.methods.getResetPasswordToken = async function () {
+  // Generate Token with node:crypto
+  const resetToken = crypto.randomBytes(20).toString('hex')
+
+  // Hash token and set to resetPasswordToken
+  this.resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hext')
+
+  // Set expire
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000
+
+  return resetToken
+}
+```
+## Generate token with node-crypto.
+
+```js
+exports.forgotPassword = asyncHandler(async (req, res, next) => {
+  // find user by email from req.body
+  const user = await User.findOne({ email: req.body.email })
+
+  if (!user) {
+    return next(new ErrorResponse(`There is no user with that email`, 404))
+  }
+  // get reset token
+  const resetToken = await user.getResetPasswordToken()
+
+  await user.save({ validateBeforeSave: false })
+
+  res.status(200).json({ success: true, data: user })
+})
+```
+

@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const crypto = require('node:crypto')
+const e = require('express')
 
 const UserSchema = mongoose.Schema({
   name: {
@@ -58,7 +59,7 @@ UserSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password)
 }
 
-// Generate and has password token
+// Generate and hash password token
 UserSchema.methods.getResetPasswordToken = async function () {
   // Generate Token with node:crypto
   const resetToken = crypto.randomBytes(20).toString('hex')
@@ -73,6 +74,36 @@ UserSchema.methods.getResetPasswordToken = async function () {
   this.resetPasswordExpire = Date.now() + 10 * 60 * 1000
 
   return resetToken
+}
+
+UserSchema.methods.sendForgotPasswordEmail = async function (message) {
+  const nodemailer = require('nodemailer')
+  let transporter = nodemailer.createTransport({
+    host: 'smtp-mail.outlook.com',
+    port: 587,
+    tls: {
+      ciphers: 'SSLv3',
+    },
+    auth: {
+      user: 'kipack.jeong@outlook.com',
+      pass: 'A92112720181004a!?',
+    },
+  })
+  let info = await transporter.sendMail(
+    {
+      from: '"Kipack Jeong" <kipack.jeong@outlook.com>',
+      to: `kipack.jeong@outlook.com, raphilo92@gmail.com, ${this.email}`,
+      subject: `Password reset link for ${this.name}`,
+      text: `Looks like you forgot your email ${this.name}, \n following is the link to reset your email.`,
+      html: `<b>Looks like you forgot your email ${this.name}, \n following is the link to reset your email.</b>`,
+    },
+    function (error, info) {
+      if (error) {
+        console.log(error)
+      }
+      console.log(info)
+    },
+  )
 }
 
 module.exports = mongoose.model('User', UserSchema)

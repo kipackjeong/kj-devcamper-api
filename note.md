@@ -193,6 +193,8 @@ router
 
 # **Forgot Password**
 ## npm package: nodemailer
+
+## Generate and return token in User.js model.
 ```js
 // Generate and hash password token
 UserSchema.methods.getResetPasswordToken = async function () {
@@ -211,7 +213,7 @@ UserSchema.methods.getResetPasswordToken = async function () {
   return resetToken
 }
 ```
-## Generate token with node-crypto.
+##  use getResetPasswordToken method forgotPassword POST request
 
 ```js
 exports.forgotPassword = asyncHandler(async (req, res, next) => {
@@ -226,7 +228,59 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 
   await user.save({ validateBeforeSave: false })
 
-  res.status(200).json({ success: true, data: user })
+   const resetURL = `${req.protocol}://${req.get(
+    'host',
+  )}/api/v1/auth/resetpassword/${resetToken}`
+
+  const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetURL}`
+  try {
+    await sendEmail({
+      name: user.name,
+      email: user.email,
+      subject: 'Password reset token',
+      message,
+    })
+    user.resetPasswordToken = undefined
+    user.resetPasswordExpire = undefined
+    await user.save({ validateBeforeSave: false })
+    res.status(200).json({ success: true, data: 'Email sent' })
+  } catch (error) {
+    console.log(error)
+    return next(new ErrorResponse('Email could not be sent', 500))
+  }
 })
 ```
+## Send email along with the URL auth/resetpassword/resetToken   
+### so the token is saved hashed in database, but we will pass around unhashedtoken between resetpassword  and the forgotpassword request
+
+## resetPassword PUT
+```js
+exports.resetPassword = asyncHandler(async (req, res, next) => {
+  // Get hashed token
+  const resetPasswordTokenHashed = crypto
+    .createHash('sha256')
+    .update(req.params.resettoken)
+    .digest('hex')
+  // find user with this resetPasswordToken (hashed)
+  const user = await User.findOne({
+    resetPasswordToken: resetPasswordTokenHashed,
+    resetPasswordExpire: { $gt: Date.now() },
+  })
+  if (!user) {
+    return next(new ErrorResponse('Invalid token', 400))
+  }
+  // Set new password
+  user.password = req.body.password
+  // delete resetPassword fields
+  user.resetPasswordToken = undefined
+  user.resetPasswordExpire = undefined
+  await user.save()
+  res.status(200).json({ success: true, data: 'password changed' })
+})
+```
+
+
+
+
+
 

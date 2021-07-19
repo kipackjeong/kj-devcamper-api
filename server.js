@@ -7,7 +7,6 @@ const colors = require('colors') // colors
 const errorHandler = require('./middleware/error') // custom error handler
 const fileUpload = require('express-fileupload')
 const cookieParser = require('cookie-parser')
-const { protect, authorize } = require('./middleware/auth')
 
 // Load env vars
 dotenv.config({ path: './config/config.env' })
@@ -41,11 +40,14 @@ const bootcampsRouter = require('./routes/bootcamps')
 const coursesRouter = require('./routes/courses')
 const authRouter = require('./routes/auth')
 const usersRouter = require('./routes/users')
+const reviewsRouter = require('./routes/reviews')
+
 // Mount Routers
 app.use('/api/v1/bootcamps', bootcampsRouter)
 app.use('/api/v1/courses', coursesRouter)
 app.use('/api/v1/auth', authRouter)
-app.use('/api/v1/users', protect, authorize('admin'), usersRouter)
+app.use('/api/v1/users', usersRouter)
+app.use('/api/v1/reviews', reviewsRouter)
 
 app.use(errorHandler)
 

@@ -8,7 +8,7 @@ const ReviewSchema = new mongoose.Schema({
     required: [true, 'Please add title for the review'],
     maxLength: 100,
   },
-  description: {
+  text: {
     type: String,
     required: [true, 'Please add description for the review'],
   },

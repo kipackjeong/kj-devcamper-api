@@ -31,6 +31,10 @@ router
   .put(protect, authorize('admin', 'publisher'), bootcampPhotoUpload)
 
 // Re-route into other resource routers
-const courseRouter = require('./courses')
-router.use('/:bootcampId/courses', courseRouter)
+const coursesRouter = require('./courses')
+const reviewsRouter = require('./reviews')
+
+router.use('/:bootcampId/courses', coursesRouter)
+router.use('/:bootcampId/reviews', reviewsRouter)
+
 module.exports = router

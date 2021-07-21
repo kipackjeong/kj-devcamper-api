@@ -11,7 +11,7 @@
   },
 ```
 
-# **User Authentication**  
+## **User Authentication**  
 
 ## npm package: jsonwebtoken , bcryptjs
 
@@ -74,7 +74,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 ```  
 note: because password field is set to select:false, .select('+password') is needed when retrieving user via email.
 
-# **Storing token in cookie**
+## **Storing token in cookie**
 ## npm package: cookie-parser
 
 ## Add cookieparser middleware to server.js
@@ -128,7 +128,7 @@ const sendTokenResponse = (user, statusCode, res) => {
   .json({ success: true, token: token })
 ```
 
-# **Auth middleware**
+## **Auth middleware**
 
 ## protect method to do initial authorization.
 ```js
@@ -191,7 +191,7 @@ router
 ## now that I have attached my auth middleware which verifies and sets req.user from request headers, we may access req.user in any controllers.
 
 
-# **Forgot Password**
+## **Forgot Password**
 ## npm package: nodemailer
 
 ## Generate and return token in User.js model.
@@ -251,7 +251,7 @@ exports.forgotPassword = asyncHandler(async (req, res, next) => {
 })
 ```
 ## Send email along with the URL auth/resetpassword/resetToken   
-### so the token is saved hashed in database, but we will pass around unhashedtoken between resetpassword  and the forgotpassword request
+## so the token is saved hashed in database, but we will pass around unhashedtoken between resetpassword  and the forgotpassword request
 
 ## resetPassword PUT
 ```js
@@ -279,8 +279,80 @@ exports.resetPassword = asyncHandler(async (req, res, next) => {
 })
 ```
 
+## Logout Users
+```js
+// @desc : logout current logged in user
+// @route : GET /api/v1/auth/logout
+// @access : Private
+exports.logout = asyncHandler(async (req, res, next) => {
+  res.cookie('token', 'none', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  })
+
+  res.status(200).json({ success: true, data: {} })
+})
+```
 
 
+# **API SECURITY**
+## Prevent no SQL rejection / sanitize data
+```
+  npm i express-mongo-sanitize
+```
+```js
+const mongoSanitize = require('express-mongo-sanitize')
+// Sanitize
+app.use(mongoSanitize())
+```
 
+## Security Header via using helmet
+```
+npm i helmet
+```
+```js
+const helmet = require('helmet')
+// Security Header
+app.use(helmet())
+```
 
+## Xss clean to sanitize user input
+```
+npm i xss-clean
+```
+```js
+const xssclean = require('xss-clean')
+// Xss clean : sanitizes user input.
+app.use(xssclean()) 
+```
 
+## Rate limiter
+```
+npm i express-rate-limit
+```
+```js
+const rateLimit = require('express-rate-limit')
+// Rate limiter
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1,
+})
+app.use(limiter)
+```
+## HPP to protect against HTTP request parameter pollution attacks
+``` 
+npm i hpp
+```
+```js
+const hpp = require('hpp')
+// HPP, protect against HTTP request parameter pollution attacks
+app.use(hpp())
+```
+## CORS, Cross Origin Resource Sharing
+```
+npm i cors
+```
+```js
+const cors = require('cors')
+app.use(cors())
+```

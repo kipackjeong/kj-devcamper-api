@@ -8,10 +8,13 @@ const connectDB = async () => {
     useFindAndModify: true,
     useUnifiedTopology: true,
     useFindAndModify: false,
+    autoIndex: false,
   })
   console.log(
     colors.cyan.underline(`MongoDB Connected ${conn.connection.host}`),
   )
+
+  mongoose
 }
 
 module.exports = connectDB

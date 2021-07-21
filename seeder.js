@@ -19,6 +19,7 @@ mongoose.connect(process.env.MONGO_URI, {
   useCreateIndex: true,
   useFindAndModify: true,
   useUnifiedTopology: true,
+  autoIndex: false,
 })
 
 // Read JSON files

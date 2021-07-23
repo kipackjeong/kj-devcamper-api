@@ -356,3 +356,6 @@ npm i cors
 const cors = require('cors')
 app.use(cors())
 ```
+
+ sudo apt-get install docker-ce=5:20.10.7~3-0~ubuntu-focal docker-ce-cli=5:20.10.7~3-0~ubuntu-focal containerd.io
+

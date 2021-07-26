@@ -2,7 +2,7 @@ const ErrorResponse = require('../utility/errorResponse')
 const User = require('../models/User')
 const asyncHandler = require('../middleware/async')
 const sendEmail = require('../utility/sendEmail')
-const crypto = require('crypto')
+const crypto = require('crypto ')
 
 // @desc : Register user
 // @route : POST /api/v1/auth/register

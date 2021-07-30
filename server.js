@@ -40,7 +40,7 @@ app.use(xssclean())
 // Rate limiter
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1,
+  max: 10,
 })
 app.use(limiter)
 

@@ -1,7 +1,26 @@
+const qs = require('qs')
+const parseNested = (queryObj, queryArr) => {
+  if (typeof queryObj != 'object') {
+    return [queryArr, queryObj]
+  }
+
+  for (const property in queryObj) {
+    queryArr.push(property)
+    return parseNested(queryObj[property], queryArr)
+  }
+  return [queryArr.join('.'), queryObj]
+}
+
 const advancedResults = (model, populate) => async (req, res, next) => {
   let query
-
-  // Copy req.query
+  let queryObject = {}
+  if ('location' in req.query) {
+    const location = req.query['location']
+    delete req.query['location']
+    const [queryString, queryObj] = parseNested(location, [])
+    req.query['location' + '.' + queryString] = queryObj
+  }
+  // Copy req.queryz
   const reqQuery = { ...req.query }
   // Fields to exclude
   const removeFields = ['select', 'sort', 'page', 'limit']
@@ -10,7 +29,6 @@ const advancedResults = (model, populate) => async (req, res, next) => {
   removeFields.forEach((param) => delete reqQuery[param])
   // Create query string
   let queryStr = JSON.stringify(reqQuery)
-
   // Create operators ($gt,$gte,$lt,$lte,$in)
   queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, (match) => `$${match}`)
   query = model.find(JSON.parse(queryStr))
@@ -18,10 +36,8 @@ const advancedResults = (model, populate) => async (req, res, next) => {
   // Select Fields ex) &select=description,name
   if (req.query.select) {
     let selectedFields = req.query.select.split(',').join(' ')
-
     query.select(selectedFields)
   }
-
   // Sort  ex) &sort=-name
   if (req.query.sort) {
     let sortOptions = req.query.sort.split(',').join(' ')
@@ -45,7 +61,6 @@ const advancedResults = (model, populate) => async (req, res, next) => {
 
   // Executing query
   const results = await query
-
   // Pagination result
   const pagination = {}
 
